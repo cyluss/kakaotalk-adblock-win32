@@ -6,10 +6,10 @@ use chrono::{DateTime, Local};
 use winapi::shared::{minwindef, windef};
 use winapi::um::winuser;
 
-const CLASS_KAKAO_TALK_AD_VIEW: &str = "EVA_Window";
+const CLASS_KAKAO_TALK_AD_VIEW: &str = "BannerAdWnd";
 const CLASS_KAKAO_TALK_LOCK_VIEW: &str = "EVA_ChildWindow_Dblclk";
 const CLASS_KAKAO_TALK_MAIN_VIEW: &str = "EVA_ChildWindow";
-const CLASS_KAKAO_TALK_POPUP: &str = "EVA_Window_Dblclk";
+const CLASS_KAKAO_TALK_POPUP: &str = "RichPopWnd";
 
 const TITLE_KAKAO_TALK: &str = "카카오톡";
 const TITLE_KAKAO_TALK_EDGE: &str = "KakaoTalkEdgeWnd";
@@ -85,7 +85,7 @@ extern "system" fn winevent_callback(
     _foo: *mut windef::HWINEVENTHOOK__, event: u32, hwnd: *mut windef::HWND__, _baz: i32, _spam: i32, _ham: u32, _quaz: u32) {
     let window_detail = get_window_detail(hwnd);
 
-    match (event, window_detail.title.as_str(), window_detail.class_name.as_str()) {
+    match (event, window_detail.title.as_str(), window_detail.class_name.replace("Sandbox:DefaultBox:", "").as_str()) {
         (winuser::EVENT_OBJECT_CREATE, "", CLASS_KAKAO_TALK_POPUP) => {
             let popup_rect= get_window_rect(window_detail.hwnd);
             if popup_rect.is_none() {
@@ -149,14 +149,14 @@ pub fn remove_ad_layout() {
     });
 
     let main_view = window_details.iter().find(|entry| {
-        return entry.class_name == String::from(CLASS_KAKAO_TALK_MAIN_VIEW) && entry.title.starts_with(&String::from(TITLE_KAKAO_TALK_MAIN_VIEW));
+        return entry.class_name.replace("Sandbox:DefaultBox:", "") == String::from(CLASS_KAKAO_TALK_MAIN_VIEW) && entry.title.starts_with(&String::from(TITLE_KAKAO_TALK_MAIN_VIEW));
     });
     if main_view.is_none() {
         return;
     }
     let main_view = main_view.unwrap();
     let ad_view = window_details.iter().find(|entry| {
-        return entry.class_name == String::from(CLASS_KAKAO_TALK_AD_VIEW) && entry.title == String::from("");
+        return entry.class_name.replace("Sandbox:DefaultBox:", "") == String::from(CLASS_KAKAO_TALK_AD_VIEW) && entry.title == String::from("");
     });
     if ad_view.is_none() {
         return;
@@ -167,7 +167,7 @@ pub fn remove_ad_layout() {
     }
 
     let lock_view = window_details.iter().find(|entry| {
-        return entry.class_name == String::from(CLASS_KAKAO_TALK_LOCK_VIEW) && entry.title.starts_with(&String::from(TITLE_KAKAO_TALK_LOCK_VIEW));
+        return entry.class_name.replace("Sandbox:DefaultBox:", "") == String::from(CLASS_KAKAO_TALK_LOCK_VIEW) && entry.title.starts_with(&String::from(TITLE_KAKAO_TALK_LOCK_VIEW));
     });
 
     let mut remove_ad_layout_target: Vec<RemoveAdLayoutTarget> = vec![];
