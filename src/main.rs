@@ -78,7 +78,7 @@ fn main() {
     unsafe { UP = Some(Local::now()) };
 
     let args: Vec<String> = env::args().collect();
-    if args.len() == 2 && args[1].eq("debug") {
+    if args.len() == 2 && args[1].eq("--debug") {
         shell_monitor::set_config(shell_monitor::Config {debug: true});
     }
 
