@@ -3,6 +3,8 @@ extern crate winapi;
 use std::{borrow::BorrowMut, ffi::c_void};
 
 use chrono::{DateTime, Local};
+use log;
+use simple_logger::SimpleLogger;
 use winapi::shared::{minwindef, windef};
 use winapi::um::winuser;
 
@@ -15,8 +17,6 @@ const TITLE_KAKAO_TALK: &str = "카카오톡";
 const TITLE_KAKAO_TALK_EDGE: &str = "KakaoTalkEdgeWnd";
 const TITLE_KAKAO_TALK_LOCK_VIEW: &str = "LockModeView_";
 const TITLE_KAKAO_TALK_MAIN_VIEW: &str = "OnlineMainView";
-
-const SIZE_KAKAO_TALK_POPUP: RectSize = RectSize { width: 300, height: 150 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct RemoveAdLayoutTarget {
@@ -58,6 +58,18 @@ pub fn get_diagnostics() -> Diagnostics {
     return unsafe { DIAGNOSTICS };
 }
 
+pub struct Config {
+    pub debug: bool
+}
+
+static mut CONFIG: Config = Config {
+    debug: false
+};
+
+pub fn set_config(config: Config) {
+    unsafe { CONFIG = config };
+} 
+
 fn get_window_rect(hwnd: windef::HWND) -> Option<windef::RECT> {
     let mut rect = windef::RECT{
         left: 0, right: 0, top: 0, bottom: 0
@@ -84,19 +96,21 @@ fn get_window_detail(hwnd: windef::HWND) -> WindowDetail {
 extern "system" fn winevent_callback(
     _foo: *mut windef::HWINEVENTHOOK__, event: u32, hwnd: *mut windef::HWND__, _baz: i32, _spam: i32, _ham: u32, _quaz: u32) {
     let window_detail = get_window_detail(hwnd);
+    let rect = get_window_rect(hwnd);
+    if rect.is_none() {
+        return;
+    }
+    let size = rect_to_size(rect.unwrap());
+
+    if unsafe { CONFIG.debug } {
+        if event == winuser::EVENT_OBJECT_CREATE {
+            log::info!("{:?} {:?}", window_detail, size)
+        }
+    }
+    
 
     match (event, window_detail.title.as_str(), window_detail.class_name.replace("Sandbox:DefaultBox:", "").as_str()) {
         (winuser::EVENT_OBJECT_CREATE, "", CLASS_KAKAO_TALK_POPUP) => {
-            let popup_rect= get_window_rect(window_detail.hwnd);
-            if popup_rect.is_none() {
-                return;
-            }
-
-            let popup_size = rect_to_size(popup_rect.unwrap());
-            if popup_size != SIZE_KAKAO_TALK_POPUP {
-                return;
-            }
-
             unsafe { winuser::SendMessageW(window_detail.hwnd, winuser::WM_CLOSE, 0, 0) };
             unsafe { DIAGNOSTICS = Diagnostics {
                 remove_ad_popup_count: DIAGNOSTICS.remove_ad_popup_count + 1,
@@ -226,6 +240,8 @@ pub fn remove_ad_layout() {
 }
 
 pub fn run() -> *mut windef::HWINEVENTHOOK__   {
+    SimpleLogger::new().init().unwrap();
+
     let interested_events = [
         winuser::EVENT_OBJECT_CREATE, winuser::EVENT_SYSTEM_MOVESIZEEND, winuser::EVENT_OBJECT_LOCATIONCHANGE,
         winuser::EVENT_OBJECT_LIVEREGIONCHANGED, winuser::EVENT_OBJECT_CREATE

@@ -7,6 +7,7 @@ extern crate native_windows_derive as nwd;
 use chrono::{DateTime, Local};
 use nwd::NwgUi;
 use nwg::NativeUi;
+use std::env;
 
 const UNKNOWN_ICON: &[u8] = include_bytes!("../assets/question-mark-4-16.ico");
 static VERSION: &'static str = include_str!("../assets/version.txt");
@@ -75,6 +76,11 @@ impl BasicApp {
 
 fn main() {
     unsafe { UP = Some(Local::now()) };
+
+    let args: Vec<String> = env::args().collect();
+    if args.len() == 2 && args[1].eq("debug") {
+        shell_monitor::set_config(shell_monitor::Config {debug: true});
+    }
 
     let hook = shell_monitor::run();
     shell_monitor::remove_ad_layout();
