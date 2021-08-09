@@ -213,9 +213,9 @@ pub fn remove_ad_layout() {
             unsafe { winuser::SetWindowPos(entry.ad_view_hwnd, 0 as windef::HWND, 0, 0, 0, 0, 0)};
         }
 
-        if main_view_size.height != top_view_size.height - 32 {
+        if main_view_size.height != top_view_size.height - 31 {
             unsafe { winuser::SetWindowPos(entry.main_view_hwnd, 0 as windef::HWND, 1, 30,
-                main_view_size.width, top_view_size.height - 32, 0)};
+                main_view_size.width, top_view_size.height - 31, 0)};
             unsafe { DIAGNOSTICS = Diagnostics {
                 remove_ad_layout_count: DIAGNOSTICS.remove_ad_layout_count + 1,
                 remove_ad_layout_last: Some(Local::now()),
